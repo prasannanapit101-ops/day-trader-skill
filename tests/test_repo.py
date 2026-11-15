@@ -119,6 +119,26 @@ class Repo(unittest.TestCase):
                 "reopen the project or restart the session."):
             self.assertIn(instruction, readme)
 
+    def test_readme_documents_nepse_entry_practice(self):
+        with open(os.path.join(ROOT, "README.md"), encoding="utf-8") as fh:
+            readme = " ".join(fh.read().split())
+        for instruction in (
+                "only `/trader-entry` has a NEPSE learning mode",
+                "trader-entry/nepse_practice.py",
+                "timestamp,open,high,low,close",
+                "UTC+05:45",
+                "does not fetch live prices or check trading days and holidays",
+                "synthetic, not a real company or quote"):
+            self.assertIn(instruction, readme)
+        self.assertTrue(os.path.isfile(os.path.join(ROOT, "trader-entry", "nepse_practice.py")))
+
+    def test_entry_skill_routes_nepse_to_offline_practice(self):
+        _, text = frontmatter(os.path.join(ROOT, "trader-entry", "SKILL.md"))
+        text = " ".join(text.split())
+        self.assertIn("nepse_practice.py", text)
+        self.assertIn("do not run the U.S. Yahoo/NYSE entry logic on a NEPSE symbol", text)
+        self.assertIn("Do not pass a NEPSE result to the U.S.-only", text)
+
     def test_no_em_dashes_and_no_personal_email(self):
         for path in every_text_file():
             with open(path, encoding="utf-8", errors="replace") as fh:

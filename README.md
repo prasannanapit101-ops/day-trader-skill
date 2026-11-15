@@ -79,7 +79,7 @@ or in the `SEC_USER_AGENT` environment variable.
 | --- | --- | --- |
 | `/trader-scanner` | Chart Scanner | Scans thousands of charts for setups: opening-range breakouts, flags, oversold bounces. |
 | `/trader-news` | News Monitor | Tracks breaking news on every stock you watch and flags what moves it. |
-| `/trader-entry` | Entry Timer | Watches a setup bar by bar and tells you the moment to get in. |
+| `/trader-entry` | Entry Timer | Watches U.S. setups and checks NEPSE practice setups from user-supplied candles. |
 | `/trader-exit` | Exit Planner | Sets your stop and your target before you enter, so you know when to get out. |
 | `/trader-timemachine` | Time Machine | Replays every possible outcome of a trade before you risk a dollar: 10,000 simulated sessions plus every past time the setup fired. |
 | `/trader-risk` | Risk Manager | Checks every trade against your limits and stops anything over them. |
@@ -99,6 +99,12 @@ scanner -> news -> entry -> exit -> timemachine -> budget -> risk -> broker   (o
 alerts: stop, target, flat by the close                                       (while it is open)
 news / analyst / pelosi                                                        (on a schedule)
 ```
+
+**NEPSE practice:** only `/trader-entry` has a NEPSE learning mode. It analyzes
+one session of candles that you supply in a CSV, uses Nepal time, and never
+fetches live quotes or places an order. The other skills in this pack remain
+U.S.-market tools; do not pass NEPSE practice output to trader-exit, budget,
+risk or broker. See the NEPSE example below before using it with your own data.
 
 An example, the trade in the reel: Tesla, Monday October 19 2026, real data.
 
@@ -138,16 +144,19 @@ An example, the trade in the reel: Tesla, Monday October 19 2026, real data.
 
 ## The tools
 
-All standard-library Python. The data tools read public endpoints and are
-polite about it.
+All standard-library Python. The U.S. data tools read public endpoints and are
+polite about it. NEPSE entry practice uses only candle CSV data you provide.
 
 ```bash
 python3 trader-scanner/scan.py universe                                # ~5,900 US stocks, Nasdaq Trader
 python3 trader-scanner/scan.py daily                                   # pre-market setups, whole universe
 python3 trader-scanner/scan.py orb --at 10:15                          # opening-range breakouts so far
 python3 trader-news/news.py --tickers TSLA --hours 12                  # headlines, 8-Ks, today's move
-python3 trader-entry/entry.py check TSLA --setup orb                   # waiting / triggered / expired
-python3 trader-entry/entry.py watch TSLA --every 30                    # bar by bar until it triggers
+python3 trader-entry/entry.py check TSLA --setup orb                   # U.S. entry check
+python3 trader-entry/entry.py watch TSLA --every 30                    # U.S. bars, until a trigger
+python3 trader-entry/nepse_practice.py check DEMO \
+    --candles tests/fixtures/trader-entry/NEPSE-DEMO-5m.csv \
+    --interval 5m --as-of "2026-11-13 11:20"                      # synthetic NEPSE demo, NPT
 python3 trader-exit/exit.py plan --stop or-mid --target 1R --write     # -> trader/plan.json
 python3 trader-timemachine/timemachine.py run --write                  # 10,000 replays + the history
 python3 trader-budget/size.py --write                                  # -> trader/orders.json
@@ -159,14 +168,42 @@ python3 trader-analyst/facts.py TSLA                                   # quarter
 python3 trader-pelosi/ptr.py index --member pelosi                     # her PTRs this year
 ```
 
+### NEPSE practice with trader-entry
+
+The regular `trader-entry/entry.py` path is for U.S. Yahoo data and NYSE time.
+For NEPSE, use `trader-entry/nepse_practice.py` with one session of OHLCV
+candles you export or paste into CSV. Required headers are
+`timestamp,open,high,low,close`; `volume` is optional unless you use
+`--min-volume-x`. Timestamps label candle starts and are interpreted as Nepal
+time (UTC+05:45) when no offset is included. The default assumed session is
+11:00-15:00 NPT; use `--session-open` and `--session-close` if the official
+session changes. The helper does not fetch live prices or check trading days
+and holidays, so verify those on [NEPSE's market page](https://www.nepalstock.com/todaysprice)
+before using a real session.
+
+The included `NEPSE-DEMO-5m.csv` is synthetic, not a real company or quote.
+It is there to learn the command and the rule. Use only completed 1-minute or
+5-minute bars; a wick above the opening-range high is not a close above it.
+The helper also does not model fees, settlement, price limits, or broker rules.
+
+For step-by-step help in Claude Code, start with `/trader-entry` and say:
+
+```text
+I'm practicing NEPSE, not placing an order. Please explain one step at a time.
+My symbol is [symbol], interval is 5m, and here are my candles:
+[paste timestamp, open, high, low, close, and optional volume rows]
+```
+
 ```bash
 python3 -m unittest discover -s tests -v
 ```
 
-The tests run offline, on fixtures cut from real data: TSLA's 5-minute bars
-for the 60 days to October 19 2026, the 10:15 AM opening-range scan, Yahoo's
-TSLA headlines that morning, the House Clerk's 2026 index, real PTR text and
-real XBRL facts. They reproduce every number in the example above.
+The tests run offline. Most fixtures are cut from real data: TSLA's 5-minute
+bars for the 60 days to October 19 2026, the 10:15 AM opening-range scan,
+Yahoo's TSLA headlines that morning, the House Clerk's 2026 index, real PTR
+text and real XBRL facts. The NEPSE entry fixture is explicitly synthetic and
+exists only to test the practice calculation. The U.S. fixtures reproduce the
+numbers in the example above.
 
 ## Fine print
 
@@ -218,7 +255,7 @@ wash sales likely. Nothing here is tax advice.
 .claude/skills/    project-local copies of all eleven skills for Claude Code
 trader-scanner/     SKILL.md, scan.py
 trader-news/        SKILL.md, news.py
-trader-entry/       SKILL.md, entry.py
+trader-entry/       SKILL.md, entry.py, nepse_practice.py (offline NEPSE practice)
 trader-exit/        SKILL.md, exit.py
 trader-timemachine/ SKILL.md, timemachine.py
 trader-risk/        SKILL.md, check.py
