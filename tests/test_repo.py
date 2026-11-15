@@ -40,7 +40,34 @@ class Repo(unittest.TestCase):
 
     def test_root_matches_the_reel(self):
         root = sorted(d for d in os.listdir(ROOT) if not d.startswith(".git"))
-        self.assertEqual(root, sorted([".claude-plugin", "LICENSE", "README.md", "tests"] + SKILLS))
+        self.assertEqual(root, sorted([".claude", ".claude-plugin", "LICENSE", "README.md", "tests"] + SKILLS))
+
+    def test_project_local_skills_are_installed_and_match_sources(self):
+        installed_root = os.path.join(ROOT, ".claude", "skills")
+        found = sorted(d for d in os.listdir(installed_root)
+                       if os.path.isfile(os.path.join(installed_root, d, "SKILL.md")))
+        self.assertEqual(found, sorted(SKILLS))
+
+        for skill in SKILLS:
+            source = os.path.join(ROOT, skill)
+            installed = os.path.join(installed_root, skill)
+            source_files = {}
+            installed_files = {}
+            for base, dirs, files in os.walk(source):
+                dirs[:] = sorted(d for d in dirs if d != "__pycache__")
+                for filename in files:
+                    path = os.path.join(base, filename)
+                    relative = os.path.relpath(path, source)
+                    with open(path, "rb") as fh:
+                        source_files[relative] = fh.read()
+            for base, dirs, files in os.walk(installed):
+                dirs[:] = sorted(d for d in dirs if d != "__pycache__")
+                for filename in files:
+                    path = os.path.join(base, filename)
+                    relative = os.path.relpath(path, installed)
+                    with open(path, "rb") as fh:
+                        installed_files[relative] = fh.read()
+            self.assertEqual(installed_files, source_files, skill)
 
     def test_frontmatter_name_and_description(self):
         for s in SKILLS:
@@ -80,6 +107,17 @@ class Repo(unittest.TestCase):
             self.assertIn(line, readme)
         for s in SKILLS:
             self.assertIn("/" + s, readme, s)
+
+    def test_readme_explains_access_from_this_fork(self):
+        with open(os.path.join(ROOT, "README.md"), encoding="utf-8") as fh:
+            readme = " ".join(fh.read().split())
+        for instruction in (
+                "This fork already includes all eleven skills under `.claude/skills/`.",
+                "open this repository's root directory in Claude Code.",
+                "cd /path/to/day-trader-skill claude",
+                "No extra plugin installation or copying is needed for this repository.",
+                "reopen the project or restart the session."):
+            self.assertIn(instruction, readme)
 
     def test_no_em_dashes_and_no_personal_email(self):
         for path in every_text_file():

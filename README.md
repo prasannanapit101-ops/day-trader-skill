@@ -47,10 +47,26 @@ git clone https://github.com/Jakeschincariol/day-trader-skill.git
 cp -r day-trader-skill/trader-* ~/.claude/skills/
 ```
 
-Project-local instead of global: copy the same folders into your repo's
-`.claude/skills/`. No Claude Code at all? Paste any single `SKILL.md` at the
-top of a chat and it runs as a mode. You lose the Python tools, but the method
-works.
+### Use the skills from this fork in Claude Code
+
+This fork already includes all eleven skills under `.claude/skills/`. To access
+them, open this repository's root directory in Claude Code. From a terminal:
+
+```bash
+cd /path/to/day-trader-skill
+claude
+```
+
+The project-local commands are available in that session as `/trader-scanner`,
+`/trader-news`, `/trader-entry`, `/trader-exit`, `/trader-timemachine`,
+`/trader-risk`, `/trader-budget`, `/trader-broker`, `/trader-alerts`,
+`/trader-analyst` and `/trader-pelosi`. No extra plugin installation or copying
+is needed for this repository. These commands are scoped to this checkout; to
+use them in another project, copy the skill folders into that project's
+`.claude/skills/`. If Claude Code was already open before the skills were
+installed, reopen the project or restart the session. No Claude Code at all?
+Paste any single `SKILL.md` at the top of a chat and it runs as a mode. You lose
+the Python tools, but the method works.
 
 The tools need Python 3.8 or newer. Nothing to pip install. The SEC tools
 (news filings, the analyst) ask you to identify yourself: put your name and
@@ -199,6 +215,7 @@ wash sales likely. Nothing here is tax advice.
 ## Files
 
 ```
+.claude/skills/    project-local copies of all eleven skills for Claude Code
 trader-scanner/     SKILL.md, scan.py
 trader-news/        SKILL.md, news.py
 trader-entry/       SKILL.md, entry.py
