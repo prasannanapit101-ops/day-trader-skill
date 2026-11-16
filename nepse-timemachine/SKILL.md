@@ -16,6 +16,9 @@ complete prior sessions, and simulated paths resampled from those sessions.
 The simulation uses only candle history the learner supplies. It does not
 fetch market data, and its estimates are not forecasts.
 
+It keeps the original Time Machine's historical outcomes and repeatable
+simulated paths, but uses only supplied NEPSE sessions and makes no forecast.
+
 First save a dated ORB plan from `/nepse-exit`, then provide at least 20 full
 prior sessions plus the plan date's completed entry candle:
 

@@ -15,6 +15,9 @@ This tool compares figures already collected by the learner. It does not query
 company filings, NEPSE, SEBON, investor-relations pages, or a live financial
 database. Keep the original report open to verify figures and context.
 
+It keeps the original earnings analyst's period-over-period review, adapted
+to supplied NEPSE figures instead of fetched SEC/XBRL filings.
+
 ```bash
 python3 nepse_tools/cli.py analyst \
   --file nepse_tools/examples/financials.example.csv

@@ -16,6 +16,9 @@ a stop is appropriate. With an ORB entry result, the default practice stop is
 the opening-range midpoint. The user can instead choose the range low or enter
 a custom stop. A level setup needs a custom stop.
 
+It preserves the original exit planner's entry-stop-target math and plan
+handoff, adapted to learner-selected NPR levels with no live position tracking.
+
 Create a plan from the entry helper's JSON result:
 
 ```bash

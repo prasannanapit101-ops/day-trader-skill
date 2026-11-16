@@ -16,6 +16,10 @@ This is an offline practice scanner. It screens only the per-symbol candle
 files that the user provides. It is not a full-exchange live screener, does
 not download symbols or prices, and does not decide what is worth buying.
 
+This preserves the original scanner's role of surfacing rule-matching charts
+for the learner to review, but replaces a U.S. universe and live chart feed
+with NEPSE candles supplied by the learner.
+
 Run from the repository root:
 
 ```bash

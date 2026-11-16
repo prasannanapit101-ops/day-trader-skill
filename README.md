@@ -98,19 +98,19 @@ or in the `SEC_USER_AGENT` environment variable.
 
 ## The eleven NEPSE practice skills
 
-| command | job | what it does |
+| NEPSE command | Closest U.S. counterpart | adapted role |
 | --- | --- | --- |
-| `/nepse-scanner` | Candle Scanner | Screens per-symbol 1m/5m CSVs supplied by the learner for opening-range practice. |
-| `/nepse-news` | News Monitor | Organizes user-supplied headlines and preserves dates, sources, and links. |
-| `/nepse-entry` | Entry Practice | Checks completed candle closes against an opening range or a user-supplied level. |
-| `/nepse-exit` | Exit Planner | Calculates NPR risk and a target from the user's selected stop method. |
-| `/nepse-timemachine` | Historical Replay | Replays supplied history and seeded bootstrap paths from complete sessions. |
-| `/nepse-risk` | Risk Check | Checks hypothetical orders against limits the learner enters in NPR. |
-| `/nepse-budget` | Budget Manager | Calculates whole-share practice size and can write a proposed order JSON. |
-| `/nepse-broker` | Paper Ticket | Formats a ticket for review; it has no broker or TMS connection. |
-| `/nepse-alerts` | Alert Check | Makes a one-time comparison using quote rows supplied by the learner. |
-| `/nepse-analyst` | Company Analyst | Compares user-supplied company financials without fetching filings. |
-| `/nepse-disclosures` | Public Notices | Organizes user-supplied company/exchange notices, not political trades. |
+| `/nepse-scanner` | `/trader-scanner` | Screens learner-supplied per-symbol 1m/5m CSVs for opening-range practice; no exchange-wide live scan. |
+| `/nepse-news` | `/trader-news` | Organizes supplied headlines and keeps dates, sources, and links visible; no feed. |
+| `/nepse-entry` | `/trader-entry` | Checks completed candle closes against an opening range or user-supplied level. |
+| `/nepse-exit` | `/trader-exit` | Calculates NPR risk and target from the user's selected stop method. |
+| `/nepse-timemachine` | `/trader-timemachine` | Replays supplied history and seeded bootstrap paths from complete sessions. |
+| `/nepse-risk` | `/trader-risk` | Checks hypothetical orders against the learner's own NPR limits. |
+| `/nepse-budget` | `/trader-budget` | Calculates whole-share practice size and can write a proposed order JSON. |
+| `/nepse-broker` | `/trader-broker` | Formats a paper ticket only; no broker or TMS connection. |
+| `/nepse-alerts` | `/trader-alerts` | Makes a one-time comparison using quote rows supplied by the learner. |
+| `/nepse-analyst` | `/trader-analyst` | Compares user-supplied company financials without fetching filings. |
+| `/nepse-disclosures` | `/trader-pelosi` | Replaces political-trade tracking with supplied public company/exchange notices. |
 
 ## How to use it
 
@@ -120,9 +120,10 @@ between its skills. Keep that flow separate from NEPSE files:
 ```
 U.S.:    scanner -> news -> entry -> exit -> timemachine -> budget -> risk -> broker
          alerts while the U.S. trade is open; analyst / pelosi for research
-NEPSE:   supplied candles -> nepse-entry -> nepse-exit -> nepse-timemachine
-         -> nepse-budget -> nepse-risk -> nepse-broker (paper ticket only)
-         supplied quotes -> nepse-alerts; supplied records -> news / analyst / disclosures
+NEPSE:   supplied candles -> nepse-scanner -> nepse-news -> nepse-entry
+         -> nepse-exit -> nepse-timemachine -> nepse-budget -> nepse-risk
+         -> nepse-broker (paper ticket only); supplied quotes -> nepse-alerts
+         supplied records -> nepse-news / nepse-analyst / nepse-disclosures
 ```
 
 The NEPSE tools are an offline learning set, not a mirror of the U.S. live-data

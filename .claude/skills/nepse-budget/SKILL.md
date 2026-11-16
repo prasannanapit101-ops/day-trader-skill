@@ -12,8 +12,11 @@ argument-hint: "[NEPSE plan JSON] [capital NPR] [maximum loss NPR]"
 # NEPSE Budget Manager
 
 This is whole-share sizing arithmetic, not a recommendation. It caps the
-quantity by both the learner's stated maximum loss and available cash. To
-continue the NEPSE practice workflow, pass the plan made by `/nepse-exit`:
+quantity by both the learner's stated maximum loss and available cash. It
+preserves the original budget manager's max-loss and cash-based size caps,
+adapted for NEPSE whole shares and NPR; fees are included only when supplied.
+
+To continue the NEPSE practice workflow, pass the plan made by `/nepse-exit`:
 
 ```bash
 python3 nepse_tools/cli.py budget \

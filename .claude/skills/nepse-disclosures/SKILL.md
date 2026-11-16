@@ -11,10 +11,13 @@ argument-hint: "[public notice CSV or JSON] [optional symbol]"
 
 # NEPSE Corporate Disclosures
 
-This is the Nepal-market counterpart to a U.S.-specific political-trade
-tracker. It organizes only public company or exchange notices the learner
-provides. It does not assume a Nepal equivalent of a U.S. congressional PTR
-feed and does not track private or insider trades.
+This is the Nepal-market counterpart to the original U.S. disclosure tracker.
+It organizes only public company or exchange notices the learner provides. It
+does not assume a Nepal equivalent of a U.S. congressional PTR feed and does
+not track politicians' trades, private trades, or insider trades.
+
+It preserves source-and-date review for public disclosures while adapting the
+subject from U.S. political transactions to Nepal corporate notices.
 
 ```bash
 python3 nepse_tools/cli.py disclosures \

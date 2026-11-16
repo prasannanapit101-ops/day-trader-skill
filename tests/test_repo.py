@@ -13,6 +13,19 @@ NEPSE_SKILLS = ["nepse-scanner", "nepse-news", "nepse-entry", "nepse-exit", "nep
                 "nepse-risk", "nepse-budget", "nepse-broker", "nepse-alerts", "nepse-analyst",
                 "nepse-disclosures"]
 ALL_SKILLS = SKILLS + NEPSE_SKILLS
+NEPSE_COUNTERPARTS = {
+    "nepse-scanner": "trader-scanner",
+    "nepse-news": "trader-news",
+    "nepse-entry": "trader-entry",
+    "nepse-exit": "trader-exit",
+    "nepse-timemachine": "trader-timemachine",
+    "nepse-risk": "trader-risk",
+    "nepse-budget": "trader-budget",
+    "nepse-broker": "trader-broker",
+    "nepse-alerts": "trader-alerts",
+    "nepse-analyst": "trader-analyst",
+    "nepse-disclosures": "trader-pelosi",
+}
 ABOUT = ("22 Claude skills: the original 11 U.S. day-trading skills plus 11 offline NEPSE practice skills "
          "for user-supplied Nepal-market data.")
 # skills on the way to an order carry the safety block
@@ -74,6 +87,16 @@ class Repo(unittest.TestCase):
                     with open(path, "rb") as fh:
                         installed_files[relative] = fh.read()
             self.assertEqual(installed_files, source_files, skill)
+
+    def test_nepse_set_is_a_one_to_one_adaptation_of_the_original_set(self):
+        self.assertEqual(set(NEPSE_COUNTERPARTS), set(NEPSE_SKILLS))
+        self.assertEqual(set(NEPSE_COUNTERPARTS.values()), set(SKILLS))
+        with open(os.path.join(ROOT, "README.md"), encoding="utf-8") as fh:
+            readme = " ".join(fh.read().split())
+        for nepse_skill, original_skill in NEPSE_COUNTERPARTS.items():
+            self.assertTrue(os.path.isfile(os.path.join(ROOT, nepse_skill, "SKILL.md")), nepse_skill)
+            self.assertTrue(os.path.isfile(os.path.join(ROOT, original_skill, "SKILL.md")), original_skill)
+            self.assertIn("| `/%s` | `/%s` |" % (nepse_skill, original_skill), readme)
 
     def test_frontmatter_name_and_description(self):
         for s in ALL_SKILLS:

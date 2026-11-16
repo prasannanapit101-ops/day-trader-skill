@@ -14,6 +14,9 @@ argument-hint: "[alert rules JSON] [timestamped prices CSV]"
 This tool compares supplied price rows with supplied `above` or `below` levels
 once. It is not a background watcher, notification service, or live quote feed.
 
+It preserves the original alerts skill's threshold-check role, but replaces
+continuous quote/calendar polling with a single comparison of supplied rows.
+
 ```bash
 python3 nepse_tools/cli.py alerts \
   --rules nepse_tools/examples/alerts.example.json \

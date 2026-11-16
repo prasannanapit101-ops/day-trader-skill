@@ -15,6 +15,9 @@ This command tags headlines the learner already has. It does not download
 news, check a paywall, verify a notice, or predict how a ticker will move.
 Keyword tags are filing-navigation hints, not sentiment analysis.
 
+It keeps the original news monitor's company-by-company headline review, but
+categorizes only supplied records and makes no live-feed or price-impact claim.
+
 ```bash
 python3 nepse_tools/cli.py news \
   --file nepse_tools/examples/news.example.csv

@@ -15,6 +15,9 @@ This checks user-entered numbers against the learner's own practice limits.
 It is not a legal, exchange, settlement, or broker-compliance check. The
 checker only supports long BUY entries and stays paper-only.
 
+It preserves the original risk manager's per-order PASS/BLOCK checks, adapted
+to explicit learner-provided NPR limits without account access or approval.
+
 Copy the example config to a private working folder, then replace all zero
 limits with the learner's own values. Zero limits are intentionally rejected:
 

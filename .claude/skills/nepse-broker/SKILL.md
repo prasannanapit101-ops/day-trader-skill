@@ -15,6 +15,9 @@ This is not a broker integration. It formats one order for inspection and
 cannot log in to a Trading Management System, submit, cancel, or amend an order.
 The output is always marked `PAPER TICKET ONLY - NOT PLACED`.
 
+It keeps the original broker workflow's human-readable ticket review while
+removing broker execution, account access, credentials, and order state.
+
 Use the proposed order JSON from `/nepse-budget`:
 
 ```bash

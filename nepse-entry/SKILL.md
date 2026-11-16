@@ -11,6 +11,10 @@ argument-hint: "[symbol] [one-session candle CSV] [setup orb|level]"
 
 # NEPSE Entry Practice
 
+This preserves the original entry tool's completed-bar opening-range and
+level-check workflow, using Nepal time and supplied candles instead of Yahoo
+quotes and the NYSE calendar.
+
 The regular `/trader-entry` command includes a separate offline NEPSE helper.
 You can call the same helper through this skill's shared CLI:
 
