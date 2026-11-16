@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "day-trader-skill",
-      "description": "Eleven Claude skills for day trading: a chart scanner, a news monitor, an entry timer, an exit planner, a time machine that replays 10,000 sessions, a risk manager, a budget manager, an order executor (paper by default, never without your yes), price alerts, an earnings analyst and a Pelosi tracker.",
+      "description": "Twenty-two Claude skills: the original U.S. chart scanner, news monitor, entry and exit tools, time machine, risk manager, budget manager, broker workflow, alerts, earnings analyst and Pelosi tracker, plus eleven offline NEPSE practice skills using learner-supplied data. NEPSE tools do not fetch live prices or place orders.",
       "source": "./",
       "category": "productivity",
       "homepage": "https://github.com/Jakeschincariol/day-trader-skill"

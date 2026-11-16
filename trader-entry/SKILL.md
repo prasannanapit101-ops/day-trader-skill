@@ -11,18 +11,22 @@ description: >-
   places an order. Use when the user says "tell me when to get in", "watch
   TSLA", "has it broken out", "did it break the opening range", "entry
   signal", "time my entry", "check my watchlist", or after /trader-scanner
-  and /trader-news, before /trader-exit.
-argument-hint: "[TICKER] [--setup orb|level] [--interval 5m|1m]"
+  and /trader-news, before /trader-exit. For NEPSE practice, reads user-supplied
+  1-minute or 5-minute OHLCV CSV in Nepal time, explains the setup in plain
+  language, and never fetches live data or recommends a buy. Use when the user
+  mentions NEPSE, Nepal stocks, or asks for beginner-friendly entry practice.
+argument-hint: "[TICKER] [US or NEPSE] [setup] [chart or candle CSV]"
 ---
 
 # trader-entry
 
-The Entry Timer turns a setup into one moment: the bar that confirms it. It
-reads bars, 1-minute or 5-minute, and waits for each one to finish. A price
-that pokes above the high in the middle of a bar is not an entry. A bar that
-CLOSES above it is. Then it says the time and the price, writes them down for
-the Exit Planner, and stops. It never buys anything. Day trading loses most
-people money, and a clean signal does not change that.
+The Entry Timer turns a setup into one moment: the bar that confirms it. For
+U.S. tickers, it reads Yahoo 1-minute or 5-minute bars. For NEPSE practice, it
+uses the separate offline CSV helper below; do not run the U.S. Yahoo/NYSE
+entry logic on a NEPSE symbol. A price that pokes above a level in the middle
+of a bar is not a trigger. A bar that CLOSES above it is. It never buys
+anything. Day trading loses most people money, and a clean signal does not
+change that.
 
 `${CLAUDE_SKILL_DIR}` below is this skill's folder (where this SKILL.md lives).
 
@@ -35,20 +39,63 @@ python3 "${CLAUDE_SKILL_DIR}/entry.py" watch TSLA --until 15:30    # one line pe
 python3 "${CLAUDE_SKILL_DIR}/entry.py" watchlist                   # every hit in trader/watchlist.json
 ```
 
-Other flags: `--or-minutes N` (default 15), `--json`, `--offline FILE` (a
-saved Yahoo chart JSON, `.json` or `.json.gz`, or a folder of
-`<TICKER>.json`), `--now "2026-10-19 10:15"` (New York time) to replay a day.
-`watch` with `--now` or `--offline` runs on a simulated clock and replays the
-day bar by bar without waiting.
+Other flags for U.S. symbols: `--or-minutes N` (default 15), `--json`,
+`--offline FILE` (a saved Yahoo chart JSON, `.json` or `.json.gz`, or a folder
+of `<TICKER>.json`), `--now "2026-10-19 10:15"` (New York time) to replay a
+day. `watch` with `--now` or `--offline` runs on a simulated clock and
+replays the day bar by bar without waiting.
+
+## NEPSE practice mode (offline only)
+
+Do not run `entry.py` for NEPSE: that path assumes U.S. Yahoo data and NYSE
+time. `nepse_practice.py` is a separate learning helper. It uses only a
+one-session OHLCV CSV you provide; it does not fetch live NEPSE prices or
+orders. It does not model fees, settlement, price limits, or broker rules.
+Its default session is 11:00-15:00 NPT and its opening range is the first 15
+minutes of regular trading (11:00-11:15). Check NEPSE's current
+[market page](https://www.nepalstock.com/todaysprice) and holiday calendar
+before using real-session data; the helper does not maintain that calendar.
+Session hours can be overridden with
+`--session-open` and `--session-close`.
+
+```bash
+# Synthetic demo only; this is not a real NEPSE quote.
+python3 "${CLAUDE_SKILL_DIR}/nepse_practice.py" check DEMO \
+    --candles tests/fixtures/trader-entry/NEPSE-DEMO-5m.csv \
+    --interval 5m --as-of "2026-11-13 11:20"
+
+# Replace the path and symbol with your own chart export.
+python3 "${CLAUDE_SKILL_DIR}/nepse_practice.py" check NABIL \
+    --candles /path/to/NABIL-5m.csv --interval 5m \
+    --as-of "2026-11-13 11:20" --setup orb
+```
+
+CSV headers are `timestamp,open,high,low,close`; `volume` is optional unless
+you set `--min-volume-x`. `timestamp` is the start of each candle. Timestamps
+without an offset are read as Nepal time (UTC+05:45). `--as-of` is also Nepal
+local time. Use one trading session per
+file and 1-minute or 5-minute candles. Only completed candles count; missing
+bars inside the opening range or before the check time are reported as
+incomplete instead of guessed. If you omit `--as-of`, the tool replays through
+the last CSV candle's close and says the data is offline.
+
+For a beginner, ask one question at a time. If they do not have a CSV, first
+explain the needed columns and ask them to paste a few candles or export a
+chart; never invent prices. Explain the range high/low, the difference between
+a wick and a closed candle, and what data is missing. The output is a practice
+condition, not a buy instruction. Do not pass a NEPSE result to the U.S.-only
+`trader-exit`, `trader-budget`, `trader-risk`, or `trader-broker` tools.
 
 ## What it reads and writes
 
-| file | what |
+| file/source | what |
 | --- | --- |
-| `trader/watchlist.json` | the scanner's hits (`hits[].symbol`), for `watchlist` |
-| `trader/config.json` | `no_entries_before` (09:45) and `no_entries_after` (15:30), New York time. Optional |
-| Yahoo chart API | today's bars, `range=1d&interval=5m` (or `1m`): free, unofficial, can lag |
-| `trader/entry.json` | with `check --write`, or when `watch` triggers: symbol, setup, status, time, bar, price, level, opening range |
+| `trader/watchlist.json` | the U.S. scanner's hits (`hits[].symbol`), for `watchlist` |
+| `trader/config.json` | U.S. entry cutoffs in New York time. Optional |
+| Yahoo chart API | U.S. bars, `range=1d&interval=5m` (or `1m`): free, unofficial, can lag |
+| `trader/entry.json` | U.S. result with `check --write`, or when `watch` triggers |
+| User-supplied NEPSE CSV | one session of 1m/5m OHLCV candles; no live fetch |
+| `trader/nepse-entry.json` | NEPSE practice result with `nepse_practice.py --write` |
 
 ## The rule
 
@@ -75,21 +122,25 @@ day bar by bar without waiting.
 
 ## Steps
 
-1. Get the symbol from the user, or run `entry.py watchlist` after
-   `/trader-scanner`. Check `/trader-news` for it first.
-2. Run `entry.py check SYMBOL`. Tell the user the status in one line:
-   waiting and how far, triggered at what time and price, or expired.
-3. To wait for it, Claude can run `entry.py watch SYMBOL --until 15:30` in
-   the background, or `entry.py check SYMBOL --write` on a `/loop` every 5
-   minutes. `watch` wakes just after each bar closes, prints one line per
-   bar, and exits 0 on the trigger (it writes `trader/entry.json`) or 1 when
-   the setup expires. Keep the computer awake while it watches: a sleeping
-   laptop pauses it, and it catches up, late, when it wakes.
-4. When it triggers, say the time and the price, and that nothing was placed.
-   If the trigger is more than a bar old, say that too: a late entry is a
-   different trade.
-5. Hand off to `/trader-exit` to set the stop and the target BEFORE anything
-   is bought.
+1. Identify the market first. For U.S. symbols, get the ticker, use the U.S.
+   scanner/news path when useful, and run `entry.py check SYMBOL`. For NEPSE,
+   do not use Yahoo, the U.S. scanner, or the NYSE clock.
+2. For NEPSE practice, ask for the symbol and one session of 1m/5m OHLCV CSV
+   (or a chart export the user can turn into that CSV). Explain the expected
+   columns and Nepal-time timestamps if they need help. Never fill in missing
+   prices from guesses.
+3. Run `nepse_practice.py check SYMBOL --candles FILE --interval 5m --as-of
+   "YYYY-MM-DD HH:MM"`. Explain whether the range is still forming, the data
+   is incomplete, or a completed close met the practice rule. Point out the
+   exact candle and show how its close compares with the level. For U.S.
+   symbols only, `entry.py watch` can run in the background or `entry.py check`
+   can run on a `/loop`; do not use either live-watching path for NEPSE.
+4. For a beginner, explain one idea at a time: opening-range high/low, why a
+   wick is not a close, and what the result cannot tell them. Ask them to mark
+   the level on their own chart and describe what would invalidate the setup.
+5. For U.S. results only, hand off to `/trader-exit` for a stop and target.
+   Do not hand a NEPSE result to the U.S.-only exit, budget, risk, or broker
+   tools. Nothing was bought or placed by either entry path.
 
 ## Example: the reel
 
@@ -116,8 +167,9 @@ and the trigger moves to 10:35 AM at 365.75 (the 10:30 bar, 7.98x).
 
 ## Rules
 
-- Bar by bar, on free Yahoo 1-minute or 5-minute bars. They are unofficial
-  and can lag. Say so when a minute matters.
+- For U.S. symbols, use Yahoo 1-minute or 5-minute bars; they are unofficial
+  and can lag. For NEPSE, use only the candles the user supplies, and label
+  the result offline practice rather than live data.
 - A signal is information, not an order, and not a promise. Nothing here
   promises winning trades or money.
 - Long side only. v2 plans longs only. If the user wants a short, say that.
