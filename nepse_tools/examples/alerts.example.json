@@ -1,0 +1,6 @@
+{
+  "alerts": [
+    {"symbol": "DEMO", "above": 104},
+    {"symbol": "DEMO", "below": 95}
+  ]
+}

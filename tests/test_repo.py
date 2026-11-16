@@ -5,12 +5,16 @@ import unittest
 
 from _load import ROOT
 
-# v2, the day-trading pack: the eleven folders the reel's repo card shows
+# The original U.S. pack remains intact alongside the NEPSE practice set.
 SKILLS = ["trader-scanner", "trader-news", "trader-entry", "trader-exit", "trader-timemachine",
           "trader-risk", "trader-budget", "trader-broker", "trader-alerts", "trader-analyst",
           "trader-pelosi"]
-ABOUT = ("11 Claude skills for day trading: scan thousands of charts, track breaking news, time every "
-         "entry and exit, and replay every outcome before you risk a dollar.")
+NEPSE_SKILLS = ["nepse-scanner", "nepse-news", "nepse-entry", "nepse-exit", "nepse-timemachine",
+                "nepse-risk", "nepse-budget", "nepse-broker", "nepse-alerts", "nepse-analyst",
+                "nepse-disclosures"]
+ALL_SKILLS = SKILLS + NEPSE_SKILLS
+ABOUT = ("22 Claude skills: the original 11 U.S. day-trading skills plus 11 offline NEPSE practice skills "
+         "for user-supplied Nepal-market data.")
 # skills on the way to an order carry the safety block
 ORDER_PATH = ["trader-scanner", "trader-entry", "trader-exit", "trader-timemachine", "trader-budget",
               "trader-pelosi", "trader-risk", "trader-broker", "trader-alerts"]
@@ -33,22 +37,24 @@ def every_text_file():
 
 
 class Repo(unittest.TestCase):
-    def test_eleven_skill_folders_at_the_root(self):
+    def test_both_eleven_skill_sets_are_present_at_the_root(self):
         found = sorted(d for d in os.listdir(ROOT)
                        if os.path.isfile(os.path.join(ROOT, d, "SKILL.md")))
-        self.assertEqual(found, sorted(SKILLS))
+        self.assertEqual(found, sorted(ALL_SKILLS))
 
-    def test_root_matches_the_reel(self):
-        root = sorted(d for d in os.listdir(ROOT) if not d.startswith(".git"))
-        self.assertEqual(root, sorted([".claude", ".claude-plugin", "LICENSE", "README.md", "tests"] + SKILLS))
+    def test_root_contains_the_original_repo_plus_nepse_tools(self):
+        root = sorted(d for d in os.listdir(ROOT) if d != ".git")
+        expected = [".claude", ".claude-plugin", ".gitignore", "LICENSE", "README.md",
+                    "nepse_tools", "tests"] + ALL_SKILLS
+        self.assertEqual(root, sorted(expected))
 
     def test_project_local_skills_are_installed_and_match_sources(self):
         installed_root = os.path.join(ROOT, ".claude", "skills")
         found = sorted(d for d in os.listdir(installed_root)
                        if os.path.isfile(os.path.join(installed_root, d, "SKILL.md")))
-        self.assertEqual(found, sorted(SKILLS))
+        self.assertEqual(found, sorted(ALL_SKILLS))
 
-        for skill in SKILLS:
+        for skill in ALL_SKILLS:
             source = os.path.join(ROOT, skill)
             installed = os.path.join(installed_root, skill)
             source_files = {}
@@ -70,7 +76,7 @@ class Repo(unittest.TestCase):
             self.assertEqual(installed_files, source_files, skill)
 
     def test_frontmatter_name_and_description(self):
-        for s in SKILLS:
+        for s in ALL_SKILLS:
             fm, text = frontmatter(os.path.join(ROOT, s, "SKILL.md"))
             self.assertIn("name: %s\n" % s, fm + "\n", s)
             self.assertRegex(fm, r"description: ", s)
@@ -105,31 +111,37 @@ class Repo(unittest.TestCase):
                      "/plugin install day-trader-skill@day-trader-skill",
                      "## Fine print"):
             self.assertIn(line, readme)
-        for s in SKILLS:
+        for s in ALL_SKILLS:
             self.assertIn("/" + s, readme, s)
 
     def test_readme_explains_access_from_this_fork(self):
         with open(os.path.join(ROOT, "README.md"), encoding="utf-8") as fh:
             readme = " ".join(fh.read().split())
         for instruction in (
-                "This fork already includes all eleven skills under `.claude/skills/`.",
+                "This fork includes all 22 skills under `.claude/skills/`.",
                 "open this repository's root directory in Claude Code.",
                 "cd /path/to/day-trader-skill claude",
-                "No extra plugin installation or copying is needed for this repository.",
-                "reopen the project or restart the session."):
+                "No extra plugin installation or copying is needed in this repository.",
+                "reopen the project or restart the session.",
+                "/nepse-scanner", "/nepse-entry", "/nepse-disclosures"):
             self.assertIn(instruction, readme)
 
-    def test_readme_documents_nepse_entry_practice(self):
+    def test_readme_documents_the_full_offline_nepse_set(self):
         with open(os.path.join(ROOT, "README.md"), encoding="utf-8") as fh:
             readme = " ".join(fh.read().split())
         for instruction in (
-                "only `/trader-entry` has a NEPSE learning mode",
-                "trader-entry/nepse_practice.py",
+                "The eleven NEPSE practice skills",
+                "nepse_tools/cli.py",
                 "timestamp,open,high,low,close",
                 "UTC+05:45",
-                "does not fetch live prices or check trading days and holidays",
-                "synthetic, not a real company or quote"):
+                "do not fetch NEPSE prices",
+                "no TMS or broker connection",
+                "20+ full prior sessions",
+                "synthetic"):
             self.assertIn(instruction, readme)
+        for skill in NEPSE_SKILLS:
+            self.assertTrue(os.path.isfile(os.path.join(ROOT, skill, "SKILL.md")), skill)
+        self.assertTrue(os.path.isfile(os.path.join(ROOT, "nepse_tools", "cli.py")))
         self.assertTrue(os.path.isfile(os.path.join(ROOT, "trader-entry", "nepse_practice.py")))
 
     def test_entry_skill_routes_nepse_to_offline_practice(self):
@@ -160,21 +172,23 @@ class Repo(unittest.TestCase):
 
     def test_every_tool_runs_on_python_3_8(self):
         # no 3.9+ only modules or syntax in the tools (the README promises 3.8)
-        for s in SKILLS:
-            folder = os.path.join(ROOT, s)
-            for f in os.listdir(folder):
-                if not f.endswith(".py"):
-                    continue
-                with open(os.path.join(folder, f), encoding="utf-8") as fh:
-                    src = fh.read()
-                for bad in ("import zoneinfo", "from zoneinfo", ".removeprefix(", ".removesuffix(",
-                            "match ", "list[", "dict[", "tuple["):
-                    if bad == "match ":
-                        self.assertNotRegex(src, r"(?m)^\s+match \w+.*:$", "%s/%s" % (s, f))
-                    elif bad.endswith("["):
-                        self.assertNotRegex(src, r"(?<![\w.])%s" % re.escape(bad), "%s/%s" % (s, f))
-                    else:
-                        self.assertNotIn(bad, src, "%s/%s" % (s, f))
+        sources = []
+        for skill in ALL_SKILLS:
+            folder = os.path.join(ROOT, skill)
+            sources.extend(os.path.join(folder, filename) for filename in os.listdir(folder)
+                           if filename.endswith(".py"))
+        sources.append(os.path.join(ROOT, "nepse_tools", "cli.py"))
+        for path in sources:
+            with open(path, encoding="utf-8") as fh:
+                src = fh.read()
+            for bad in ("import zoneinfo", "from zoneinfo", ".removeprefix(", ".removesuffix(",
+                        "match ", "list[", "dict[", "tuple["):
+                if bad == "match ":
+                    self.assertNotRegex(src, r"(?m)^\s+match \w+.*:$", path)
+                elif bad.endswith("["):
+                    self.assertNotRegex(src, r"(?<![\w.])%s" % re.escape(bad), path)
+                else:
+                    self.assertNotIn(bad, src, path)
 
     def test_day_trading_limits_ship_in_the_example_config(self):
         with open(os.path.join(ROOT, "trader-budget", "config.example.json")) as fh:

@@ -1,0 +1,8 @@
+# Python bytecode and local test/runtime caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+
+# User-specific output written by the trading/practice tools
+trader/

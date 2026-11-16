@@ -1,6 +1,6 @@
 {
   "name": "day-trader-skill",
-  "description": "11 Claude skills for day trading: scan thousands of charts, track breaking news, time every entry and exit, and replay every outcome before you risk a dollar.",
+  "description": "22 Claude skills: the original 11 U.S. day-trading skills plus 11 offline NEPSE practice skills for user-supplied Nepal-market data.",
   "version": "2.0.0",
   "author": {
     "name": "Jake Schincariol",
@@ -16,7 +16,9 @@
     "stock-market",
     "backtesting",
     "opening-range-breakout",
-    "paper-trading"
+    "paper-trading",
+    "nepse",
+    "nepal-stock-exchange"
   ],
   "skills": "./"
 }

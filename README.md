@@ -1,10 +1,12 @@
 # The Day Trader skill
 
-11 Claude skills for day trading: scan thousands of charts, track breaking news, time every entry and exit, and replay every outcome before you risk a dollar.
+22 Claude skills: the original 11 U.S. day-trading skills plus 11 offline
+NEPSE practice skills for user-supplied Nepal-market data.
 
-Free, MIT, no signup, no API key. The tools are plain Python that read free
-public data: Yahoo Finance charts, Nasdaq Trader's symbol lists, SEC EDGAR
-and the House Clerk.
+Free, MIT, no signup, no API key. U.S. tools read public sources such as Yahoo
+Finance charts, Nasdaq Trader's symbol lists, SEC EDGAR and the House Clerk.
+NEPSE tools are offline-first: they do not fetch quotes, exchange notices, or
+company filings, and they have no TMS or broker connection.
 
 One scans thousands of charts for setups. Another tracks breaking news on
 every stock you watch. One watches a setup bar by bar and tells you the moment
@@ -13,8 +15,9 @@ craziest one is the Time Machine: before you risk a dollar, it replays the
 rest of the session 10,000 times from the stock's own recent bars, plus every
 past day the same setup fired, and tells you the honest odds.
 
-And no trade goes through until you say yes. Nothing in this pack can place
-an order on its own. Paper trading is the default.
+The U.S. broker workflow requires risk approval and your explicit yes before
+an order is sent; it defaults to paper trading. NEPSE ticket generation is
+paper-only and cannot submit any order.
 
 > **Looking for the original Trader skill?** Copy an investor's 13F, the
 > stock screener, tax lots and rebalancing live in
@@ -44,36 +47,40 @@ plain `/trader-scanner`:
 
 ```bash
 git clone https://github.com/Jakeschincariol/day-trader-skill.git
-cp -r day-trader-skill/trader-* ~/.claude/skills/
+cp -r day-trader-skill/trader-* day-trader-skill/nepse-* ~/.claude/skills/
 ```
 
 ### Use the skills from this fork in Claude Code
 
-This fork already includes all eleven skills under `.claude/skills/`. To access
-them, open this repository's root directory in Claude Code. From a terminal:
+This fork includes all 22 skills under `.claude/skills/`. To access them, open
+this repository's root directory in Claude Code. From a terminal:
 
 ```bash
 cd /path/to/day-trader-skill
 claude
 ```
 
-The project-local commands are available in that session as `/trader-scanner`,
-`/trader-news`, `/trader-entry`, `/trader-exit`, `/trader-timemachine`,
-`/trader-risk`, `/trader-budget`, `/trader-broker`, `/trader-alerts`,
-`/trader-analyst` and `/trader-pelosi`. No extra plugin installation or copying
-is needed for this repository. These commands are scoped to this checkout; to
-use them in another project, copy the skill folders into that project's
-`.claude/skills/`. If Claude Code was already open before the skills were
-installed, reopen the project or restart the session. No Claude Code at all?
-Paste any single `SKILL.md` at the top of a chat and it runs as a mode. You lose
-the Python tools, but the method works.
+The original commands are `/trader-scanner`, `/trader-news`, `/trader-entry`,
+`/trader-exit`, `/trader-timemachine`, `/trader-risk`, `/trader-budget`,
+`/trader-broker`, `/trader-alerts`, `/trader-analyst` and `/trader-pelosi`.
+The NEPSE commands are `/nepse-scanner`, `/nepse-news`, `/nepse-entry`,
+`/nepse-exit`, `/nepse-timemachine`, `/nepse-risk`, `/nepse-budget`,
+`/nepse-broker`, `/nepse-alerts`, `/nepse-analyst` and `/nepse-disclosures`.
+No extra plugin installation or copying is needed in this repository. These
+commands are scoped to this checkout; to use the NEPSE commands in another
+project, copy the matching `nepse-*` skill folders into its `.claude/skills/`,
+then copy `nepse_tools/` and `trader-entry/nepse_practice.py` into matching
+paths at that project's root. Run the CLI from that root. If Claude Code was
+already open, reopen the project or restart the session. No
+Claude Code at all? Read a `SKILL.md` in a chat, but Python commands still need
+the repository and its local files.
 
 The tools need Python 3.8 or newer. Nothing to pip install. The SEC tools
 (news filings, the analyst) ask you to identify yourself: put your name and
 email in `trader/config.json` (`"sec_user_agent": "Your Name you@example.com"`)
 or in the `SEC_USER_AGENT` environment variable.
 
-## The eleven
+## The original U.S. eleven
 
 | command | job | what it does |
 | --- | --- | --- |
@@ -89,22 +96,40 @@ or in the `SEC_USER_AGENT` environment variable.
 | `/trader-analyst` | Earnings Analyst | Reads earnings reports and sums up what changed. |
 | `/trader-pelosi` | Pelosi Tracker | Reads Congress's stock-trade disclosures the minute they are filed. |
 
+## The eleven NEPSE practice skills
+
+| command | job | what it does |
+| --- | --- | --- |
+| `/nepse-scanner` | Candle Scanner | Screens per-symbol 1m/5m CSVs supplied by the learner for opening-range practice. |
+| `/nepse-news` | News Monitor | Organizes user-supplied headlines and preserves dates, sources, and links. |
+| `/nepse-entry` | Entry Practice | Checks completed candle closes against an opening range or a user-supplied level. |
+| `/nepse-exit` | Exit Planner | Calculates NPR risk and a target from the user's selected stop method. |
+| `/nepse-timemachine` | Historical Replay | Replays supplied history and seeded bootstrap paths from complete sessions. |
+| `/nepse-risk` | Risk Check | Checks hypothetical orders against limits the learner enters in NPR. |
+| `/nepse-budget` | Budget Manager | Calculates whole-share practice size and can write a proposed order JSON. |
+| `/nepse-broker` | Paper Ticket | Formats a ticket for review; it has no broker or TMS connection. |
+| `/nepse-alerts` | Alert Check | Makes a one-time comparison using quote rows supplied by the learner. |
+| `/nepse-analyst` | Company Analyst | Compares user-supplied company financials without fetching filings. |
+| `/nepse-disclosures` | Public Notices | Organizes user-supplied company/exchange notices, not political trades. |
+
 ## How to use it
 
-Everything lands in a `trader/` folder in your project, and each skill reads
-what the last one wrote:
+The original U.S. workflow writes its state under `trader/` and hands results
+between its skills. Keep that flow separate from NEPSE files:
 
 ```
-scanner -> news -> entry -> exit -> timemachine -> budget -> risk -> broker   (one trade)
-alerts: stop, target, flat by the close                                       (while it is open)
-news / analyst / pelosi                                                        (on a schedule)
+U.S.:    scanner -> news -> entry -> exit -> timemachine -> budget -> risk -> broker
+         alerts while the U.S. trade is open; analyst / pelosi for research
+NEPSE:   supplied candles -> nepse-entry -> nepse-exit -> nepse-timemachine
+         -> nepse-budget -> nepse-risk -> nepse-broker (paper ticket only)
+         supplied quotes -> nepse-alerts; supplied records -> news / analyst / disclosures
 ```
 
-**NEPSE practice:** only `/trader-entry` has a NEPSE learning mode. It analyzes
-one session of candles that you supply in a CSV, uses Nepal time, and never
-fetches live quotes or places an order. The other skills in this pack remain
-U.S.-market tools; do not pass NEPSE practice output to trader-exit, budget,
-risk or broker. See the NEPSE example below before using it with your own data.
+The NEPSE tools are an offline learning set, not a mirror of the U.S. live-data
+and broker integrations. They do not fetch NEPSE prices, company reports or
+exchange notices, do not check the official trading calendar, and cannot
+connect to TMS or submit orders. Each command uses only files the learner
+provides. Do not pass NPR prices, plans, or orders to U.S.-market tools.
 
 An example, the trade in the reel: Tesla, Monday October 19 2026, real data.
 
@@ -144,8 +169,9 @@ An example, the trade in the reel: Tesla, Monday October 19 2026, real data.
 
 ## The tools
 
-All standard-library Python. The U.S. data tools read public endpoints and are
-polite about it. NEPSE entry practice uses only candle CSV data you provide.
+All tools use standard-library Python. The U.S. data tools read public
+endpoints and are polite about it. The NEPSE CLI uses only learner-supplied
+CSV/JSON and has no network or broker client.
 
 ```bash
 python3 trader-scanner/scan.py universe                                # ~5,900 US stocks, Nasdaq Trader
@@ -168,29 +194,72 @@ python3 trader-analyst/facts.py TSLA                                   # quarter
 python3 trader-pelosi/ptr.py index --member pelosi                     # her PTRs this year
 ```
 
-### NEPSE practice with trader-entry
+## NEPSE practice workflow
 
-The regular `trader-entry/entry.py` path is for U.S. Yahoo data and NYSE time.
-For NEPSE, use `trader-entry/nepse_practice.py` with one session of OHLCV
-candles you export or paste into CSV. Required headers are
-`timestamp,open,high,low,close`; `volume` is optional unless you use
-`--min-volume-x`. Timestamps label candle starts and are interpreted as Nepal
-time (UTC+05:45) when no offset is included. The default assumed session is
-11:00-15:00 NPT; use `--session-open` and `--session-close` if the official
-session changes. The helper does not fetch live prices or check trading days
-and holidays, so verify those on [NEPSE's market page](https://www.nepalstock.com/todaysprice)
-before using a real session.
+Use the `/nepse-*` skills for a Nepal-market practice workflow. The regular
+`trader-entry/entry.py` path uses U.S. Yahoo data and New York time; the separate
+NEPSE helper reads only the candles you supply. Run the shared CLI from the
+repository root:
 
-The included `NEPSE-DEMO-5m.csv` is synthetic, not a real company or quote.
-It is there to learn the command and the rule. Use only completed 1-minute or
-5-minute bars; a wick above the opening-range high is not a close above it.
-The helper also does not model fees, settlement, price limits, or broker rules.
+```bash
+# Optional: screen one-session per-symbol CSV files you provide.
+python3 nepse_tools/cli.py scan --candles-dir /path/to/per-symbol-csvs \
+  --as-of "2026-11-13 11:20" --interval 5m --or-minutes 15
 
-For step-by-step help in Claude Code, start with `/trader-entry` and say:
+# Check one symbol and write a reusable entry result.
+python3 nepse_tools/cli.py entry check NABIL \
+  --candles /path/to/NABIL-5m.csv --interval 5m \
+  --as-of "2026-11-13 11:20" --write trader/nepse-entry.json
+
+# Choose a practice stop method and save the plan.
+python3 nepse_tools/cli.py exit --from-entry trader/nepse-entry.json \
+  --stop-method or-mid --target-r 1 --write trader/nepse-plan.json
+
+# Historical replay needs 20+ full prior sessions plus the plan-date entry bar.
+python3 nepse_tools/cli.py timemachine --plan trader/nepse-plan.json \
+  --candles /path/to/NABIL-multi-session-5m.csv --replays 10000 --seed 19
+
+# Size a hypothetical order, then check it against your own limits.
+python3 nepse_tools/cli.py budget --plan trader/nepse-plan.json \
+  --capital 100000 --max-loss 1200 --write trader/nepse-orders.json
+cp nepse_tools/config.example.json trader/nepse-config.json
+# Edit every zero limit to your own numbers; the risk command rejects missing limits.
+python3 nepse_tools/cli.py risk --orders trader/nepse-orders.json \
+  --config trader/nepse-config.json --daily-loss 0 --trades-today 0
+
+# This formats a paper ticket only. It does not send an order.
+python3 nepse_tools/cli.py broker --order trader/nepse-orders.json
+```
+
+Other practice workflows use supplied records only:
+
+```bash
+python3 nepse_tools/cli.py news --file /path/to/headlines.csv --symbol NABIL
+python3 nepse_tools/cli.py alerts --rules /path/to/alerts.json --prices /path/to/prices.csv
+python3 nepse_tools/cli.py analyst --file /path/to/financials.csv
+python3 nepse_tools/cli.py disclosures --file /path/to/notices.csv --symbol NABIL
+```
+
+CSV candles use `timestamp,open,high,low,close` and optional `volume`. Time
+labels are candle starts; naive timestamps mean Nepal time (UTC+05:45). The
+assumed session is 11:00-15:00 NPT, but this is only a configurable assumption,
+not an official calendar. Use `--session-open` and `--session-close` when
+needed and verify the current schedule and holidays against official NEPSE
+announcements. These helpers do not model fees, tax, settlement, price limits,
+liquidity, TMS rules, or broker requirements.
+
+`nepse_tools/examples/candles/DEMO.csv` and the other `DEMO` records are
+synthetic. They are not real companies, prices, quotes, headlines, filings or
+notices. Scanner files contain one symbol and one session each. Time Machine
+needs full multi-session history and checks that prior sessions are complete;
+never make up candles to satisfy that requirement. Its seeded paths resample
+user-provided history and are not a forecast.
+
+For step-by-step help in Claude Code, start with `/nepse-entry` and say:
 
 ```text
 I'm practicing NEPSE, not placing an order. Please explain one step at a time.
-My symbol is [symbol], interval is 5m, and here are my candles:
+My symbol is [symbol], interval is 5m, and these are my candles:
 [paste timestamp, open, high, low, close, and optional volume rows]
 ```
 
@@ -223,10 +292,16 @@ selling or leverage unless you turn them on.
 Alpaca's MCP server defaults to its paper account. Keys live in environment
 variables, never in the chat.
 
-**The Time Machine is a simulation, not a prediction.** It is built from the
-stock's own last 60 days of 5-minute bars. The future can do things those 60
-days never did: an earnings report, a halt, a headline. Treat its odds as a
-reality check, never as a promise.
+**The U.S. Time Machine is a simulation, not a prediction.** It uses that
+stock's recent 5-minute bars. The NEPSE Time Machine uses the history the user
+supplies and seeded resampling; neither sees future events such as reports,
+halts, gaps or headlines. Treat any replay as a reality check, never as a
+promise.
+
+**NEPSE is offline and paper-only.** The NEPSE tools do not fetch prices,
+news, financial reports or notices, and they do not check the official market
+calendar or connect to TMS. `/nepse-broker` only writes a ticket marked NOT
+PLACED. Verify every input against authoritative sources yourself.
 
 **A stop is a plan, not a guarantee.** In a fast market or across a gap, a
 stop order can fill well past its price. The max loss shown is the loss at
@@ -252,19 +327,15 @@ wash sales likely. Nothing here is tax advice.
 ## Files
 
 ```
-.claude/skills/    project-local copies of all eleven skills for Claude Code
-trader-scanner/     SKILL.md, scan.py
-trader-news/        SKILL.md, news.py
-trader-entry/       SKILL.md, entry.py, nepse_practice.py (offline NEPSE practice)
-trader-exit/        SKILL.md, exit.py
-trader-timemachine/ SKILL.md, timemachine.py
-trader-risk/        SKILL.md, check.py
-trader-budget/      SKILL.md, size.py, config.example.json, targets.example.json
-trader-broker/      SKILL.md, ticket.py, claude_desktop_config.example.json
-trader-alerts/      SKILL.md, alerts.py, alerts.example.json
-trader-analyst/     SKILL.md, facts.py, metrics.example.json
-trader-pelosi/      SKILL.md, ptr.py
-tests/              unittest suite + offline fixtures
+.claude/skills/    project-local copies of all 22 skills for Claude Code
+trader-*/          original U.S. skills and tools (including the separate NEPSE entry helper)
+nepse-*/           11 NEPSE workflow skill guides
+nepse_tools/       offline CSV/JSON CLI, configs and synthetic examples
+trader-entry/      U.S. entry.py plus offline nepse_practice.py
+trader-exit/       U.S. exit planner
+trader-timemachine/ U.S. simulation
+trader-budget/     U.S. sizing tool and config examples
+tests/             unittest suite + offline fixtures
 ```
 
 MIT. Made by [Jake Schincariol](https://opusjake.ai).

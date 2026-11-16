@@ -1,0 +1,11 @@
+{
+  "account_npr": 0,
+  "cash_npr": 0,
+  "max_loss_per_trade_npr": 0,
+  "max_daily_loss_npr": 0,
+  "max_trades_per_day": 0,
+  "min_reward_risk": 0,
+  "round_trip_fee_per_share_npr": 0,
+  "paper_only": true,
+  "allow_short": false
+}
